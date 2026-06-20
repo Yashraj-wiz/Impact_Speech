@@ -1,0 +1,36 @@
+# ── Large data and model caches ───────────────────────────────────────────────
+acousticscene-bias/data/
+models/
+*.wav
+*.flac
+*.mp3
+*.ogg
+
+# ── Raw dataset archives ──────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.tar
+*.7z
+
+# ── Inference outputs (raw JSONL can be large) ────────────────────────────────
+acousticscene-bias/inference/
+acousticscene-bias/checks/
+acousticscene-bias/results/
+
+# ── Python artefacts ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── Notebooks / editors ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.swp
+.DS_Store
+Thumbs.db
