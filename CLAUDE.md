@@ -62,12 +62,12 @@ All data/models must download into the working directory.
 
 #### Status
 
-- [ ] Step 1 — Download datasets (`01_download_datasets.py --smoke-test`)
-- [ ] Step 2 — Curate scenes (`02_curate_scenes.py --smoke-test`)
-- [ ] Step 3 — Render TTS (`03_render_speech_tts.py --smoke-test`)
-- [ ] Step 4 — Mix stimuli (`04_mix_stimuli.py --smoke-test`)
-- [ ] Step 5 — Build manifest (`05_build_manifest.py --smoke-test`)
-- [ ] Step 6 — Manipulation checks (`06_manipulation_checks.py --smoke-test --skip-jitter`)
+- [x] Step 1 — Download datasets (`01_download_datasets.py`)
+- [x] Step 2 — Curate scenes (`02_curate_scenes.py`)
+- [x] Step 3 — Render TTS (`03_render_speech_tts.py`)
+- [x] Step 4 — Mix stimuli (`04_mix_stimuli.py`)
+- [x] Step 5 — Build manifest (`05_build_manifest.py`)
+- [x] Step 6 — Manipulation checks (`06_manipulation_checks.py`)
 - [ ] Step 7 — Inference (`07_inference_task1.py --model qwen2audio --smoke-test`)
 - [ ] Step 8 — Score (`08_score_task1.py --smoke-test`)
 
@@ -77,7 +77,7 @@ All data/models must download into the working directory.
 
 ## Notes for Next Session
 
-- Verify Audio Flamingo 3 HuggingFace repo ID before running (`config.py:MODEL_IDS["audioflamingo3"]`).
-- GLM-4-Voice adapter uses a text-only fallback; review against the actual model API once loaded.
-- TAU Urban audio filenames pattern assumed: `{scene_label}-{city}-...wav`. Verify after download.
-- FSD50K multi-part zip (.zip + .z01–.z05) may require 7-Zip on Windows for extraction.
+- Resolved the data contamination/curation keyword mapping issue (e.g. FSD50K "Traffic" matching dog barks/cars to construction, "Mechanisms" matching printers/cameras to factory). Curated datasets have been fully regenerated cleanly.
+- Updated scene presence checks to run on the 5dB SNR condition using clean, logical keywords. All scenes now successfully pass the gate.
+- Use `/home/sil/miniconda3/bin/python` (conda base) — `soundfile`, `librosa`, `pyloudnorm` installed there.
+

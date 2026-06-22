@@ -16,6 +16,12 @@ models/
 acousticscene-bias/inference/
 acousticscene-bias/checks/
 acousticscene-bias/results/
+acousticscene-bias/manifests/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+toollog.md
+
 
 # ── Python artefacts ──────────────────────────────────────────────────────────
 __pycache__/

@@ -49,10 +49,10 @@ DEFAULT_DURATION_S = 8.0
 ESC50_AUDIO_DIR  = config.SCENES_RAW / "esc50" / "audio"
 ESC50_META_CSV   = config.SCENES_RAW / "esc50" / "meta" / "esc50.csv"
 
-TAU_AUDIO_DIR    = config.SCENES_RAW / "tau_urban" / "audio"
+TAU_AUDIO_DIR    = config.SCENES_RAW / "tau_urban" / "TAU-urban-acoustic-scenes-2019-development" / "audio"
 MUSAN_NOISE_DIR  = config.SCENES_RAW / "musan" / "noise"
-FSD50K_DEV_DIR   = config.SCENES_RAW / "fsd50k" / "dev_audio"
-FSD50K_META_CSV  = config.SCENES_RAW / "fsd50k" / "ground_truth" / "dev.csv"
+FSD50K_DEV_DIR   = config.SCENES_RAW / "fsd50k" / "dev_audio" / "FSD50K.dev_audio"
+FSD50K_META_CSV  = config.SCENES_RAW / "fsd50k" / "ground_truth" / "FSD50K.ground_truth" / "dev.csv"
 
 
 # ── Helper: collect candidate files from ESC-50 ───────────────────────────────
@@ -122,13 +122,13 @@ def _collect_candidates(scene: str) -> List[Path]:
 
     # FSD50K keyword hints per scene (matching document §1.2 source notes)
     fsd50k_map = {
-        "hospital":         ["Medical", "Siren", "Beep", "Hospital"],
-        "office":           ["Keyboard", "Typing", "Computer", "Chatter"],
-        "factory":          ["Machine", "Motor", "Engine", "Mechanical"],
-        "construction":     ["Drill", "Power tool", "Saw", "Traffic"],
-        "kitchen":          ["Cooking", "Frying", "Dishes", "Water"],
-        "classroom":        ["Chatter", "Bell", "Writing", "Crowd"],
-        "public_transport": ["Bus", "Metro", "Rail", "Vehicle", "Train"],
+        "hospital":         ["Siren", "Alarm"],
+        "office":           ["Keyboard", "Typing", "Computer"],
+        "factory":          ["Engine", "Buzz", "Crushing"],
+        "construction":     ["Drill", "Power_tool", "Sawing", "Hammer"],
+        "kitchen":          ["Cooking", "Frying", "Dishes_and_pots_and_pans", "Water_tap_and_faucet", "Sink_(filling_or_washing)"],
+        "classroom":        ["Writing"],
+        "public_transport": ["Bus", "Subway_and_metro_and_underground", "Train", "Rail_transport"],
         "infant_cry":       ["Baby", "Crying", "Infant"],
     }
     fsd50k_kws = fsd50k_map.get(scene, [])

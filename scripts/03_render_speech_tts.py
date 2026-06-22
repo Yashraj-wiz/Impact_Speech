@@ -55,15 +55,36 @@ def _loudness_norm(audio: np.ndarray, sr: int, target_lufs: float) -> np.ndarray
         return audio
 
 
-def render_items(items: List[Dict], out_dir: Path) -> None:
+def _get_kokoro_model(model_dir: Path):
+    """Download kokoro ONNX model files if needed and return a Kokoro instance."""
     try:
-        from kokoro import KPipeline
+        import kokoro_onnx
     except ImportError:
-        log.error("kokoro is not installed. Run: pip install kokoro")
+        log.error("kokoro-onnx is not installed. Run: pip install kokoro-onnx")
         raise
 
+    import urllib.request
+
+    KOKORO_BASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
+
+    model_dir.mkdir(parents=True, exist_ok=True)
+    model_path  = model_dir / "kokoro-v1.0.onnx"
+    voices_path = model_dir / "voices-v1.0.bin"
+
+    for fname, path in [("kokoro-v1.0.onnx", model_path), ("voices-v1.0.bin", voices_path)]:
+        if not path.exists():
+            url = f"{KOKORO_BASE}/{fname}"
+            log.info("Downloading %s …", fname)
+            urllib.request.urlretrieve(url, str(path))
+
+    return kokoro_onnx.Kokoro(str(model_path), str(voices_path))
+
+
+def render_items(items: List[Dict], out_dir: Path) -> None:
+    model_dir = config.MODELS / "kokoro_onnx"
+    kokoro = _get_kokoro_model(model_dir)
+
     out_dir.mkdir(parents=True, exist_ok=True)
-    pipeline = KPipeline(lang_code=config.TTS_LANG)
 
     for item in tqdm(items, desc="TTS rendering"):
         item_id = item["id"]
@@ -74,25 +95,14 @@ def render_items(items: List[Dict], out_dir: Path) -> None:
 
         text = item["prompt"]
         try:
-            # Kokoro returns a generator of (audio_chunk, sample_rate, phonemes)
-            audio_chunks = []
-            sr_out = None
-            for audio_chunk, sample_rate, _ in pipeline(
+            audio, sr_out = kokoro.create(
                 text,
                 voice=config.TTS_VOICE_C1,
                 speed=1.0,
-                split_pattern=r"\n+",
-            ):
-                audio_chunks.append(audio_chunk)
-                sr_out = sample_rate
+                lang="en-us",
+            )
+            audio = audio.astype(np.float32)
 
-            if not audio_chunks or sr_out is None:
-                log.warning("  %s: empty TTS output.", item_id)
-                continue
-
-            audio = np.concatenate(audio_chunks).astype(np.float32)
-
-            # Resample to target sample rate if needed
             if sr_out != config.SAMPLE_RATE:
                 import librosa
                 audio = librosa.resample(audio, orig_sr=sr_out, target_sr=config.SAMPLE_RATE)

@@ -96,7 +96,7 @@ DATASETS = {
         "size_gb":  24.0,
     },
     "wham": {
-        "url":     "https://storage.googleapis.com/sfx-tts/wham_noise.zip",
+        "url":     "https://my-bucket-a8b4b49c25c811ee9a7e8bba05fa24c7.s3.amazonaws.com/wham_noise.zip",
         "dest":    config.SCENES_RAW / "wham",
         "archive": config.SCENES_RAW / "wham_noise.zip",
         "extract_root": "wham_noise",
@@ -109,14 +109,33 @@ DATASETS = {
 
 def _download_file(url: str, dest: Path, chunk_mb: int = 8) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
+    resume_pos = 0
     if dest.exists():
-        log.info("  already exists, skipping: %s", dest.name)
-        return
+        try:
+            r_head = requests.head(url, timeout=30, allow_redirects=True)
+            expected = int(r_head.headers.get("content-length", 0))
+        except Exception:
+            expected = 0
+        current = dest.stat().st_size
+        if expected and current == expected:
+            log.info("  already exists (size verified), skipping: %s", dest.name)
+            return
+        elif expected and current < expected:
+            log.info("  partial file (%d/%d bytes), resuming: %s", current, expected, dest.name)
+            resume_pos = current
+        else:
+            log.info("  size mismatch, re-downloading: %s", dest.name)
+            dest.unlink()
     log.info("  downloading %s -> %s", url, dest.name)
-    r = requests.get(url, stream=True, timeout=120)
+    headers = {"Range": f"bytes={resume_pos}-"} if resume_pos else {}
+    r = requests.get(url, stream=True, timeout=120, headers=headers)
     r.raise_for_status()
     total = int(r.headers.get("content-length", 0))
-    with open(dest, "wb") as f, tqdm(total=total, unit="B", unit_scale=True, desc=dest.name) as bar:
+    mode = "ab" if resume_pos else "wb"
+    with open(dest, mode) as f, tqdm(
+        total=(total + resume_pos) if total else None,
+        unit="B", unit_scale=True, desc=dest.name, initial=resume_pos
+    ) as bar:
         for chunk in r.iter_content(chunk_size=chunk_mb * 1024 * 1024):
             f.write(chunk)
             bar.update(len(chunk))
@@ -176,10 +195,15 @@ def download_tau() -> None:
     for url in meta["urls"]:
         fname = url.split("/")[-1]
         archive = dest / fname
+        sentinel = dest / (fname + ".done")
+        if sentinel.exists():
+            log.info("  already extracted, skipping: %s", fname)
+            continue
         _download_file(url, archive)
         if fname.endswith(".zip"):
             _extract_zip(archive, dest)
             archive.unlink(missing_ok=True)
+            sentinel.touch()
     log.info("TAU done: %s", dest)
 
 

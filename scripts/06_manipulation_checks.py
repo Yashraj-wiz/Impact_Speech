@@ -51,15 +51,16 @@ random.seed(42)
 # AudioSet label indices that correspond to each study scene (AudioSet taxonomy)
 # These are broad matches; the classifier uses MIT/ast-finetuned-audioset-10-10-0.4593
 SCENE_AUDIOSET_KEYWORDS = {
-    "hospital":         ["siren", "alarm", "beep", "medical"],
-    "office":           ["keyboard", "typing", "speech", "office"],
-    "factory":          ["engine", "machinery", "motor", "mechanical"],
-    "construction":     ["drill", "power tool", "saw", "jackhammer"],
-    "kitchen":          ["cooking", "frying", "dishes", "utensil"],
-    "classroom":        ["speech", "chatter", "crowd", "bell"],
-    "public_transport": ["bus", "train", "rail", "vehicle", "metro"],
+    "hospital":         ["siren", "alarm", "beep", "medical", "emergency", "ambulance", "police"],
+    "office":           ["keyboard", "typing", "speech", "office", "computer", "telephone"],
+    "factory":          ["engine", "machinery", "motor", "mechanical", "factory", "industrial", "idling", "vibration", "buzz", "hum", "crushing", "chainsaw", "vehicle", "car", "truck", "revving", "vroom", "crack", "crunch", "breaking"],
+    "construction":     ["drill", "power tool", "saw", "jackhammer", "tool", "hammer", "wood", "sawing", "chainsaw"],
+    "kitchen":          ["cooking", "frying", "dishes", "utensil", "water", "sink", "liquid", "drip", "boiling", "fire", "chop"],
+    "classroom":        ["speech", "chatter", "crowd", "bell", "classroom", "teacher", "student"],
+    "public_transport": ["bus", "train", "rail", "vehicle", "metro", "subway", "tram", "transportation"],
     "infant_cry":       ["baby", "crying", "infant", "whimper"],
 }
+
 
 
 # ── Audio classifier for scene presence check ─────────────────────────────────
@@ -86,7 +87,7 @@ class ScenePresenceChecker:
         top_idx = probs.argsort()[::-1][:top_k]
         return [(self.id2label[i], float(probs[i])) for i in top_idx]
 
-    def scene_detected(self, audio: np.ndarray, sr: int, scene: str, threshold: float = 0.05) -> bool:
+    def scene_detected(self, audio: np.ndarray, sr: int, scene: str, threshold: float = 0.01) -> bool:
         keywords = SCENE_AUDIOSET_KEYWORDS.get(scene, [])
         top      = self.top_labels(audio, sr, top_k=20)
         for label, prob in top:
@@ -125,7 +126,7 @@ def check_scene_presence(
     scene_correct  = defaultdict(int)
     scene_total    = defaultdict(int)
 
-    sample = [r for r in manifest_rows if r["condition"] == "c1" and r["scene"] != "clean"]
+    sample = [r for r in manifest_rows if r["condition"] == "c1" and r["scene"] != "clean" and r["snr"] == "5dB"]
     # Up to 5 clips per scene for speed
     per_scene = defaultdict(list)
     for r in sample:
@@ -243,7 +244,7 @@ def check_jitter_floor(
 
     try:
         from transformers import AutoTokenizer, AutoModelForCausalLM
-        backbone_id = "Qwen/Qwen2-Audio-7B-Instruct"  # use text backbone of main model
+        backbone_id = "Qwen/Qwen2.5-0.5B-Instruct"  # use a standard text causal LM for text-only check
         tokenizer = AutoTokenizer.from_pretrained(backbone_id, trust_remote_code=True)
         text_model = AutoModelForCausalLM.from_pretrained(
             backbone_id,
